@@ -58,6 +58,33 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SMPS_EN_Pin GPIO_PIN_0
+#define SMPS_EN_GPIO_Port GPIOA
+#define SMPS_BOOST_Pin GPIO_PIN_1
+#define SMPS_BOOST_GPIO_Port GPIOA
+#define RES_EXT_Pin GPIO_PIN_4
+#define RES_EXT_GPIO_Port GPIOA
+#define MODULE_SENCE_Pin GPIO_PIN_5
+#define MODULE_SENCE_GPIO_Port GPIOA
+#define MODULE_VEXT_SENCE_Pin GPIO_PIN_6
+#define MODULE_VEXT_SENCE_GPIO_Port GPIOA
+#define MODULE_DTR_Pin GPIO_PIN_7
+#define MODULE_DTR_GPIO_Port GPIOA
+#define MODULE_RI_Pin GPIO_PIN_0
+#define MODULE_RI_GPIO_Port GPIOB
+#define MODULE_RI_EXTI_IRQn EXTI0_1_IRQn
+#define MODULE_DCD_Pin GPIO_PIN_1
+#define MODULE_DCD_GPIO_Port GPIOB
+#define MODULE_DCD_EXTI_IRQn EXTI0_1_IRQn
+#define MODULE_RFTXMON_Pin GPIO_PIN_2
+#define MODULE_RFTXMON_GPIO_Port GPIOB
+#define MODULE_RFTXMON_EXTI_IRQn EXTI2_3_IRQn
+#define MODULE_EN_Pin GPIO_PIN_15
+#define MODULE_EN_GPIO_Port GPIOA
+#define WKUP_Pin GPIO_PIN_5
+#define WKUP_GPIO_Port GPIOB
+#define EEPROM_WC_Pin GPIO_PIN_7
+#define EEPROM_WC_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

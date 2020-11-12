@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "Shrike.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,13 +40,32 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
+CRC_HandleTypeDef hcrc;
+
+I2C_HandleTypeDef hi2c1;
+
+LPTIM_HandleTypeDef hlptim1;
+
+UART_HandleTypeDef hlpuart1;
+UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+static uint8_t MODULE_Rx[1];
+static uint8_t EXTERN_Rx[1];
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_I2C1_Init(void);
+static void MX_LPUART1_UART_Init(void);
+static void MX_USART1_UART_Init(void);
+static void MX_LPTIM1_Init(void);
+static void MX_CRC_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -83,7 +102,27 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_I2C1_Init();
+  MX_LPUART1_UART_Init();
+  MX_USART1_UART_Init();
+  MX_LPTIM1_Init();
+  MX_CRC_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
+
+  /* Configure handles. */
+  TPS62140_config(&hadc1);
+  M66_Config(&huart1);
+
+  /* Start UART reception. */
+  HAL_UART_Receive_IT(&huart1, MODULE_Rx, sizeof(MODULE_Rx));
+  HAL_UART_Receive_IT(&hlpuart1, EXTERN_Rx, sizeof(EXTERN_Rx));
+
+
+  /* TMP */
+  M66_PowerOn();
+
 
   /* USER CODE END 2 */
 
@@ -106,6 +145,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Configure the main internal regulator output voltage
   */
@@ -134,9 +174,363 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  /** Initializes the peripherals clocks
+  */
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_LPUART1
+                              |RCC_PERIPHCLK_LPTIM1|RCC_PERIPHCLK_I2C1
+                              |RCC_PERIPHCLK_ADC;
+  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
+  PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+  PeriphClkInit.Lptim1ClockSelection = RCC_LPTIM1CLKSOURCE_PCLK1;
+  PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_SYSCLK;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.Resolution = ADC_RESOLUTION_8B;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.LowPowerAutoWait = DISABLE;
+  hadc1.Init.LowPowerAutoPowerOff = DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
+  hadc1.Init.SamplingTimeCommon1 = ADC_SAMPLETIME_1CYCLE_5;
+  hadc1.Init.SamplingTimeCommon2 = ADC_SAMPLETIME_1CYCLE_5;
+  hadc1.Init.OversamplingMode = DISABLE;
+  hadc1.Init.TriggerFrequencyMode = ADC_TRIGGER_FREQ_HIGH;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_5;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLINGTIME_COMMON_1;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief CRC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_CRC_Init(void)
+{
+
+  /* USER CODE BEGIN CRC_Init 0 */
+
+  /* USER CODE END CRC_Init 0 */
+
+  /* USER CODE BEGIN CRC_Init 1 */
+
+  /* USER CODE END CRC_Init 1 */
+  hcrc.Instance = CRC;
+  hcrc.Init.DefaultPolynomialUse = DEFAULT_POLYNOMIAL_ENABLE;
+  hcrc.Init.DefaultInitValueUse = DEFAULT_INIT_VALUE_ENABLE;
+  hcrc.Init.InputDataInversionMode = CRC_INPUTDATA_INVERSION_NONE;
+  hcrc.Init.OutputDataInversionMode = CRC_OUTPUTDATA_INVERSION_DISABLE;
+  hcrc.InputDataFormat = CRC_INPUTDATA_FORMAT_BYTES;
+  if (HAL_CRC_Init(&hcrc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CRC_Init 2 */
+
+  /* USER CODE END CRC_Init 2 */
+
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.Timing = 0x00303D5B;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief LPTIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_LPTIM1_Init(void)
+{
+
+  /* USER CODE BEGIN LPTIM1_Init 0 */
+
+  /* USER CODE END LPTIM1_Init 0 */
+
+  /* USER CODE BEGIN LPTIM1_Init 1 */
+
+  /* USER CODE END LPTIM1_Init 1 */
+  hlptim1.Instance = LPTIM1;
+  hlptim1.Init.Clock.Source = LPTIM_CLOCKSOURCE_APBCLOCK_LPOSC;
+  hlptim1.Init.Clock.Prescaler = LPTIM_PRESCALER_DIV1;
+  hlptim1.Init.Trigger.Source = LPTIM_TRIGSOURCE_SOFTWARE;
+  hlptim1.Init.OutputPolarity = LPTIM_OUTPUTPOLARITY_HIGH;
+  hlptim1.Init.UpdateMode = LPTIM_UPDATE_IMMEDIATE;
+  hlptim1.Init.CounterSource = LPTIM_COUNTERSOURCE_INTERNAL;
+  hlptim1.Init.Input1Source = LPTIM_INPUT1SOURCE_GPIO;
+  hlptim1.Init.Input2Source = LPTIM_INPUT2SOURCE_GPIO;
+  if (HAL_LPTIM_Init(&hlptim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN LPTIM1_Init 2 */
+
+  /* USER CODE END LPTIM1_Init 2 */
+
+}
+
+/**
+  * @brief LPUART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_LPUART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN LPUART1_Init 0 */
+
+  /* USER CODE END LPUART1_Init 0 */
+
+  /* USER CODE BEGIN LPUART1_Init 1 */
+
+  /* USER CODE END LPUART1_Init 1 */
+  hlpuart1.Instance = LPUART1;
+  hlpuart1.Init.BaudRate = 19200;
+  hlpuart1.Init.WordLength = UART_WORDLENGTH_8B;
+  hlpuart1.Init.StopBits = UART_STOPBITS_1;
+  hlpuart1.Init.Parity = UART_PARITY_NONE;
+  hlpuart1.Init.Mode = UART_MODE_TX_RX;
+  hlpuart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  hlpuart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  hlpuart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  hlpuart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  hlpuart1.FifoMode = UART_FIFOMODE_DISABLE;
+  if (HAL_UART_Init(&hlpuart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&hlpuart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&hlpuart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&hlpuart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN LPUART1_Init 2 */
+
+  /* USER CODE END LPUART1_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 19200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_RTS_CTS;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, SMPS_EN_Pin|SMPS_BOOST_Pin|MODULE_DTR_Pin|MODULE_EN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(EEPROM_WC_GPIO_Port, EEPROM_WC_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : SMPS_EN_Pin SMPS_BOOST_Pin MODULE_DTR_Pin MODULE_EN_Pin */
+  GPIO_InitStruct.Pin = SMPS_EN_Pin|SMPS_BOOST_Pin|MODULE_DTR_Pin|MODULE_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : RES_EXT_Pin MODULE_VEXT_SENCE_Pin */
+  GPIO_InitStruct.Pin = RES_EXT_Pin|MODULE_VEXT_SENCE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : MODULE_RI_Pin MODULE_DCD_Pin MODULE_RFTXMON_Pin */
+  GPIO_InitStruct.Pin = MODULE_RI_Pin|MODULE_DCD_Pin|MODULE_RFTXMON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : EEPROM_WC_Pin */
+  GPIO_InitStruct.Pin = EEPROM_WC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(EEPROM_WC_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI2_3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_3_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+ * @brief	UART Recieve ISR
+ * @param 	huart:	UART line that recieved a message
+ * @retval	None
+ */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	if(huart == &huart1){
+		/* Module Sent Message: Run ISR */
+		MCU_UART_Rx_MODULE_ISR(MODULE_Rx);
+
+		/* Reset receive on M66 */
+		HAL_UART_Receive_IT(&huart1, MODULE_Rx, sizeof(MODULE_Rx));
+	}
+	else{
+		/* Ext Sent Message: Run ISR */
+		MCU_UART_Rx_EXTERN_ISR(EXTERN_Rx);
+
+		/* Reset receive on Ext */
+		HAL_UART_Receive_IT(&hlpuart1, EXTERN_Rx, sizeof(EXTERN_Rx));
+	}
+}
 
 /* USER CODE END 4 */
 

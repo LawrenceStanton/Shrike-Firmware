@@ -56,7 +56,9 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern LPTIM_HandleTypeDef hlptim1;
+extern UART_HandleTypeDef hlpuart1;
+extern UART_HandleTypeDef huart1;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -138,6 +140,77 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32g0xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles EXTI line 0 and line 1 interrupts.
+  */
+void EXTI0_1_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI0_1_IRQn 0 */
+
+  /* USER CODE END EXTI0_1_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
+  /* USER CODE BEGIN EXTI0_1_IRQn 1 */
+
+  /* USER CODE END EXTI0_1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles EXTI line 2 and line 3 interrupts.
+  */
+void EXTI2_3_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI2_3_IRQn 0 */
+
+  /* USER CODE END EXTI2_3_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_2);
+  /* USER CODE BEGIN EXTI2_3_IRQn 1 */
+
+  /* USER CODE END EXTI2_3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles LPTIM1 interrupt through EXTI line 29.
+  */
+void LPTIM1_IRQHandler(void)
+{
+  /* USER CODE BEGIN LPTIM1_IRQn 0 */
+
+  /* USER CODE END LPTIM1_IRQn 0 */
+  HAL_LPTIM_IRQHandler(&hlptim1);
+  /* USER CODE BEGIN LPTIM1_IRQn 1 */
+
+  /* USER CODE END LPTIM1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles USART1 global interrupt / USART1 wake-up interrupt through EXTI line 25.
+  */
+void USART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART1_IRQn 0 */
+
+  /* USER CODE END USART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart1);
+  /* USER CODE BEGIN USART1_IRQn 1 */
+
+  /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles LPUART1 interrupt / LPUART1 wake-up interrupt through EXTI line 28.
+  */
+void LPUART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN LPUART1_IRQn 0 */
+
+  /* USER CODE END LPUART1_IRQn 0 */
+  HAL_UART_IRQHandler(&hlpuart1);
+  /* USER CODE BEGIN LPUART1_IRQn 1 */
+
+  /* USER CODE END LPUART1_IRQn 1 */
+}
 
 /* USER CODE BEGIN 1 */
 
